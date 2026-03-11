@@ -5,7 +5,13 @@
 name: Test CI Tools
 on:
   push:
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
   pull_request:
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
   workflow_dispatch:
 
 concurrency:
@@ -54,6 +60,7 @@ jobs:
       override_ci_tools_repository: ${{ github.repository }}
       ci_tools_version: ${{ github.sha }}
       extra_toolchains: 'parser_tools;fortran;omp;go;python3;downgraded_aws_cli;'
+      reduced_ci_mode: disabled
       save_cache: ${{ github.event_name != 'pull_request' }}
       vcpkg_binary_sources: ${{ github.event_name == 'push' && vars.VCPKG_BINARY_SOURCES || '' }}
       upload_all_extensions: true
@@ -62,6 +69,19 @@ jobs:
         duckdb_extension_load(json)
         duckdb_extension_load(tpch)
     secrets: inherit
+
+  deploy-dry-run:
+    name: Deploy workflow dry run
+    needs:
+      - extension-template-main
+    uses: ./.github/workflows/_extension_deploy.yml
+    with:
+      extension_name: quack
+      duckdb_version: v1.4.4
+      override_ci_tools_repository: ${{ github.repository }}
+      ci_tools_version: ${{ github.sha }}
+      deploy_script: /bin/true
+      reduced_ci_mode: enabled
 
   extension-template-rust:
     name: Extension template (Rust)
